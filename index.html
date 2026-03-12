@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">Mis Notas</h1>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="notesContainer" class="notes-container">
+        </div>
+
+        <div class="fab-container">
+            <button class="fab" id="fab">+</button>
+            <div class="fab-menu" id="fabMenu">
+                <button class="fab-menu-option" onclick="showAddForm('individual')">Individual</button>
+                <button class="fab-menu-option" onclick="showAddForm('grupal')">Grupal</button>
+            </div>
+        </div>
+
+        <div class="form-modal" id="formModal">
+            <div class="form-modal-content">
+                <button class="close-modal" onclick="closeFormModal()">×</button>
+                
+                <div class="form-header">
+                    <h2 id="formTitle">Agregar Nota</h2>
+                    <div class="color-picker-container">
+                        <button class="color-picker-btn" id="colorPickerBtn" onclick="toggleColorPalette()">
+                            <div class="color-preview" id="colorPreview" style="background-color: #1e3c72;"></div>
+                        </button>
+                        <div class="color-palette" id="colorPalette">
+                            <div class="color-option" style="background-color: #1e3c72;" onclick="selectColor('#1e3c72')"></div>
+                            <div class="color-option" style="background-color: #2a5298;" onclick="selectColor('#2a5298')"></div>
+                            <div class="color-option" style="background-color: #8b5cf6;" onclick="selectColor('#8b5cf6')"></div>
+                            <div class="color-option" style="background-color: #ec4899;" onclick="selectColor('#ec4899')"></div>
+                            <div class="color-option" style="background-color: #ef4444;" onclick="selectColor('#ef4444')"></div>
+                            <div class="color-option" style="background-color: #f59e0b;" onclick="selectColor('#f59e0b')"></div>
+                            <div class="color-option" style="background-color: #10b981;" onclick="selectColor('#10b981')"></div>
+                            <div class="color-option" style="background-color: #06b6d4;" onclick="selectColor('#06b6d4')"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="text" id="noteTitle" placeholder="Título de la nota" class="form-input">
+                
+                <div id="individualContent" style="display: none;">
+                    <textarea id="noteContent" placeholder="Contenido de la nota..." class="form-textarea"></textarea>
+                </div>
+                
+                <div id="grupalContent" style="display: none;">
+                    <div class="list-controls">
+                        <button class="add-item-btn" onclick="addListItem()">+ Agregar tarea</button>
+                    </div>
+                    <div class="list-items-container" id="listItemsContainer">
+                    </div>
+                </div>
+                
+                <div class="form-buttons">
+                    <button class="btn-cancel" onclick="closeFormModal()">Cancelar</button>
+                    <button class="btn-save" onclick="saveNote()">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-modal" id="viewModal">
+            <div class="view-modal-content" id="viewModalContent">
+                <button class="close-modal" onclick="closeViewModal()">×</button>
+                <h2 id="viewTitle"></h2>
+                <div id="viewContent" class="view-content"></div>
+            </div>
+        </div>
+
+        <div class="confirm-modal" id="confirmModal">
+            <div class="confirm-modal-content">
+                <div class="confirm-icon">⚠️</div>
+                <h3>¿Eliminar nota?</h3>
+                <p>Esta acción no se puede deshacer</p>
+                <div class="confirm-buttons">
+                    <button class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
+                    <button class="btn-delete" id="confirmDeleteBtn">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

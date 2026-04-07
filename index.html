@@ -3,17 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>To-Do List - Mis Notas</title>
+    <title>NODUS - Notas y Listas</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-container">
             <h1 class="nav-title">NODUS</h1>
+            <div class="nav-actions">
+                <button class="theme-toggle-btn" id="themeToggleBtn" title="Modo oscuro/claro">
+                    🌙
+                </button>
+                <button class="calendar-toggle-btn" id="calendarToggleBtn" title="Abrir calendario">
+                    📅
+                </button>
+            </div>
         </div>
     </nav>
 
     <div class="container">
+        <!-- Filtros con contadores -->
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">
+                Todas <span class="filter-count" id="countAll">0</span>
+            </button>
+            <button class="filter-btn" data-filter="notes">
+                Notas <span class="filter-count" id="countNotes">0</span>
+            </button>
+            <button class="filter-btn" data-filter="lists">
+                Listas <span class="filter-count" id="countLists">0</span>
+            </button>
+            <button class="filter-btn" data-filter="pending">
+                Pendientes <span class="filter-count" id="countPending">0</span>
+            </button>
+            <button class="filter-btn" data-filter="overdue">
+                Vencidas <span class="filter-count" id="countOverdue">0</span>
+            </button>
+            <button class="filter-btn" data-filter="completed">
+                Completadas <span class="filter-count" id="countCompleted">0</span>
+            </button>
+        </div>
+
+        <!-- Barra de ordenamiento y estadísticas toggle -->
+        <div class="controls-bar">
+            <div class="sort-controls">
+                <label class="sort-label">Ordenar por:</label>
+                <select id="sortSelect" class="sort-select">
+                    <option value="date_desc">Mas reciente primero</option>
+                    <option value="date_asc">Mas antiguo primero</option>
+                    <option value="title_asc">A-Z</option>
+                    <option value="title_desc">Z-A</option>
+                    <option value="dueDate_asc">Proximos a vencer</option>
+                    <option value="dueDate_desc">Mas lejanos</option>
+                    <option value="important">Importantes primero</option>
+                </select>
+            </div>
+            <button class="stats-toggle-btn" id="statsToggleBtn">
+                Ver Estadisticas
+            </button>
+        </div>
+
+        <!-- Panel de estadísticas -->
+        <div id="statsPanel" class="stats-panel" style="display: none;">
+            <div class="stats-header">
+                <h3>Resumen y Estadisticas</h3>
+                <button class="close-stats" id="closeStatsBtn">×</button>
+            </div>
+            <div class="stats-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-value" id="statTotalNotes">0</span>
+                            <span class="stat-label">Total de elementos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-value" id="statIndividualNotes">0</span>
+                            <span class="stat-label">Notas individuales</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-value" id="statTaskLists">0</span>
+                            <span class="stat-label">Listas de tareas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-value" id="statImportant">0</span>
+                            <span class="stat-label">Elementos importantes</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-value" id="statCompleted">0</span>
+                            <span class="stat-label">Elementos completados</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-value" id="statCompletionRate">0%</span>
+                            <span class="stat-label">Tasa de completado</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-details">
+                    <div class="stats-detail-item">
+                        <span class="detail-label">Tareas completadas hoy:</span>
+                        <span class="detail-value" id="statCompletedToday">0</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="detail-label">Notas agregadas hoy:</span>
+                        <span class="detail-value" id="statAddedToday">0</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="detail-label">Tareas totales en listas:</span>
+                        <span class="detail-value" id="statTotalTasks">0</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="detail-label">Tareas pendientes:</span>
+                        <span class="detail-value" id="statPendingTasks">0</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="detail-label">Listas vencidas:</span>
+                        <span class="detail-value" id="statOverdueLists">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="calendarContainer" class="calendar-container" style="display: none;">
+            <div class="calendar-header">
+                <button class="calendar-nav" id="prevMonth">‹</button>
+                <h3 id="currentMonthYear"></h3>
+                <button class="calendar-nav" id="nextMonth">›</button>
+            </div>
+            <div class="calendar-weekdays">
+                <div>D</div><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+        </div>
+
         <div id="notesContainer" class="notes-container">
         </div>
 
@@ -25,10 +156,10 @@
             </div>
         </div>
 
+        <!-- Modales -->
         <div class="form-modal" id="formModal">
             <div class="form-modal-content">
                 <button class="close-modal" onclick="closeFormModal()">×</button>
-                
                 <div class="modal-inner-content">
                     <div class="form-header">
                         <h2 id="formTitle">Agregar Nota</h2>
@@ -54,6 +185,12 @@
                         <input type="text" id="noteTitle" placeholder="Ingrese el titulo" class="form-input">
                         <div class="error-message" id="titleError"></div>
                     </div>
+
+                    <div class="form-group" id="dateFieldGroup" style="display: none;">
+                        <label class="form-label">Fecha (opcional)</label>
+                        <input type="date" id="noteDueDate" class="form-input">
+                        <div class="error-message" id="dateError"></div>
+                    </div>
                     
                     <div id="individualContent" style="display: none;">
                         <div class="form-group">
@@ -69,8 +206,7 @@
                             <div class="list-controls">
                                 <button class="add-item-btn" onclick="addListItem()">+ Agregar tarea</button>
                             </div>
-                            <div class="list-items-container" id="listItemsContainer">
-                            </div>
+                            <div class="list-items-container" id="listItemsContainer"></div>
                             <div class="error-message" id="listError"></div>
                         </div>
                     </div>
@@ -95,10 +231,21 @@
             <div class="confirm-modal-content">
                 <div class="confirm-icon">⚠️</div>
                 <h3>¿Eliminar nota?</h3>
-                <p>Esta acción no se puede deshacer</p>
+                <p>Esta accion no se puede deshacer</p>
                 <div class="confirm-buttons">
                     <button class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
                     <button class="btn-delete" id="confirmDeleteBtn">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar-notes-modal" id="calendarNotesModal">
+            <div class="calendar-notes-modal-content">
+                <button class="close-modal" onclick="closeCalendarNotesModal()">×</button>
+                <h2 id="calendarNotesTitle">Tareas del dia</h2>
+                <div id="calendarNotesList" class="calendar-notes-list"></div>
+                <div class="calendar-notes-buttons">
+                    <button class="btn-cancel" onclick="closeCalendarNotesModal()">Cerrar</button>
                 </div>
             </div>
         </div>

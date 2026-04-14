@@ -84,16 +84,32 @@ function setupThemeToggle() {
     const themeToggle = document.getElementById('themeToggleBtn');
     const savedTheme = localStorage.getItem('theme');
     
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        themeToggle.textContent = '☀️';
+    // Función para actualizar el tema y los botones
+    function updateTheme() {
+        const isDark = document.body.classList.contains('dark-mode');
+        // Cambiar el emoji del botón de tema
+        themeToggle.textContent = isDark ? '☀️' : '🌙';
+        
+        // También actualizar el título del botón
+        themeToggle.title = isDark ? 'Modo claro' : 'Modo oscuro';
     }
     
+    // Aplicar tema guardado
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        updateTheme();
+    } else {
+        // Asegurar modo claro por defecto
+        document.body.classList.remove('dark-mode');
+        updateTheme();
+    }
+    
+    // Evento click para cambiar tema
     themeToggle.addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
-        themeToggle.textContent = isDark ? '☀️' : '🌙';
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        updateTheme();
     });
 }
 
@@ -110,6 +126,9 @@ function setupStatsPanel() {
     closeStats.addEventListener('click', () => {
         statsPanel.style.display = 'none';
     });
+    
+    // Inicializar botones de exportación
+    initExportButtons();
 }
 
 function updateFilterCounts() {
@@ -1055,8 +1074,14 @@ function renderNotes() {
         if (currentFilter === 'pending') message = 'No hay tareas pendientes';
         if (currentFilter === 'overdue') message = 'No hay tareas vencidas';
         if (currentFilter === 'completed') message = 'No hay elementos completados';
-        container.innerHTML = `<div class="empty-message">${message}</div>`;
-        return;
+        container.innerHTML = `
+                <div class="empty-message">
+                    <p>${message}</p>
+                </div>
+            `;
+            //<img src="img/logo.png" alt="NODUS Logo" class="empty-logo empty-logo-light"> Va en la parte de arriba de esta linea
+            //<img src="img/logo3.png" alt="NODUS Logo" class="empty-logo empty-logo-dark">
+            return;
     }
     
     container.innerHTML = filteredNotes.map(note => {
@@ -1188,3 +1213,685 @@ document.getElementById('confirmModal').addEventListener('click', (e) => {
 document.getElementById('calendarNotesModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('calendarNotesModal')) closeCalendarNotesModal();
 });
+
+// ========== TOUR INTERACTIVO CON INTRO.JS ==========
+
+// Variable para controlar si el tour está activo
+let isTourActive = false;
+let currentTour = null;
+
+// Configuración del tour
+const tourConfig = {
+    steps: [
+        {
+            element: '.filter-buttons',
+            intro: "¡Bienvenido a NODUS! 👋<br><br>Aquí puedes filtrar tus notas y listas por categoría:<br>• Todas<br>• Solo notas<br>• Solo listas<br>• Pendientes<br>• Vencidas<br>• Completadas",
+            title: "Filtros Inteligentes"
+        },
+        {
+            element: '#statsToggleBtn',
+            intro: "¡Mira tu progreso! <br><br>Aquí encontrarás:<br>• Total de elementos<br>• Notas y listas creadas<br>• Elementos importantes<br>• Tasa de completado<br>• Tareas pendientes y vencidas",
+            title: "Panel de Estadísticas",
+            position: "top-middle",
+            tooltipClass: "my-tooltip-stats"
+        },
+        {
+            element: '.sort-controls',
+            intro: "Ordena tu contenido como prefieras:<br><br>📅 Por fecha (más reciente o antiguo)<br>🔤 Alfabéticamente (A-Z o Z-A)<br>⏰ Por fecha de vencimiento<br>⭐ Importantes primero",
+            title: "🔄 Orden Personalizado"
+        },
+        {
+            element: '.fab-container',
+            intro: "El botón mágico para crear contenido.<br><br>Toca aquí y elige entre:<br>• Nota Individual<br>• Lista de Tareas",
+            title: "➕ Crear Nuevo Elemento",
+            position: "left"
+        },
+        {
+            element: '#calendarToggleBtn',
+            intro: "<br><br>Revisa todas tus tareas con fecha límite en un calendario interactivo.<br><br>¡No olvides ninguna fecha importante!",
+            title: "Calendario de Tareas"
+        },
+        {
+            element: '#notesContainer',
+            intro: "<br><br>• Haz clic en una nota para ver todo su contenido<br>• En las listas, haz clic para expandir y ver tareas<br>• Marca como importante con la estrella ⭐ <br>• Usa el menú de tres puntos para editar o eliminar ⋮<br>• Marca tareas completadas en las listas",
+            title: "Tus Elementos"
+        }
+    ],
+    showProgress: true,
+    showBullets: true,
+    exitOnOverlayClick: false,
+    nextLabel: "Siguiente →",
+    prevLabel: "← Anterior",
+    skipLabel: "Saltar",
+    doneLabel: "¡Entendido! ✨",
+    tooltipPosition: "auto",
+    highlight: true,
+    scrollToElement: true,
+    scrollTo: "tooltip",
+    disableInteraction: false,
+    hidePrev: false,
+    hideNext: false,
+    exitOnEsc: true,
+};
+
+// Función para iniciar el tour principal
+function startTour() {
+    try {
+        if (typeof introJs === 'undefined') {
+            console.warn('Intro.js no está cargado');
+            return;
+        }
+        
+        if (isTourActive) return;
+        
+        closeFormModal();
+        closeViewModal();
+        closeConfirmModal();
+        closeCalendarNotesModal();
+        
+        // Cerrar cualquier panel abierto
+        const statsPanel = document.getElementById('statsPanel');
+        if (statsPanel && statsPanel.style.display === 'block') {
+            statsPanel.style.display = 'none';
+        }
+        
+        // Cerrar calendario
+        const calendarContainer = document.getElementById('calendarContainer');
+        if (calendarContainer && calendarContainer.style.display === 'block') {
+            calendarContainer.style.display = 'none';
+            calendarVisible = false;
+        }
+        
+        isTourActive = true;
+        currentTour = introJs();
+        currentTour.setOptions(tourConfig);
+        
+        // Forzar recalculo de posiciones en cada cambio de paso
+        currentTour.onbeforechange(function(targetElement) {
+            // Asegurar que el elemento esté visible en el viewport
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            // Limpiar cualquier estilo residual de tooltips anteriores
+            document.querySelectorAll('.introjs-tooltip').forEach(tooltip => {
+                tooltip.style.cssText = '';
+            });
+        });
+        
+        // Recalcular posición después de cada cambio
+        currentTour.onchange(function(targetElement) {
+            setTimeout(() => {
+                // Forzar recalculo de posiciones
+                window.dispatchEvent(new Event('resize'));
+                
+                // Ajustar tooltip manualmente si es necesario
+                const tooltip = document.querySelector('.introjs-tooltip');
+                if (tooltip && targetElement) {
+                    const rect = targetElement.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    
+                    // Si el tooltip está fuera de la pantalla, ajustar
+                    if (rect.top < 0 || rect.bottom > window.innerHeight) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    
+                    // Si el tooltip tiene top negativo, corregir
+                    if (tooltipRect.top < 0) {
+                        tooltip.style.top = 'auto';
+                        tooltip.style.bottom = '10px';
+                    }
+                }
+            }, 50);
+        });
+        
+        currentTour.onexit(function() {
+            isTourActive = false;
+            currentTour = null;
+            localStorage.setItem('tourCompleted', 'true');
+            // Limpiar estilos residuales
+            document.querySelectorAll('.introjs-tooltip').forEach(tooltip => {
+                tooltip.style.cssText = '';
+            });
+        });
+        
+        currentTour.oncomplete(function() {
+            isTourActive = false;
+            currentTour = null;
+            localStorage.setItem('tourCompleted', 'true');
+            document.querySelectorAll('.introjs-tooltip').forEach(tooltip => {
+                tooltip.style.cssText = '';
+            });
+        });
+        
+        currentTour.start();
+    } catch (error) {
+        console.error('Error al iniciar el tour:', error);
+        isTourActive = false;
+        currentTour = null;
+    }
+}
+
+// ========== SISTEMA DE AYUDA RÁPIDA (BOTÓN ESQUINA INFERIOR IZQUIERDA) ==========
+
+// Diccionario de mensajes de ayuda
+const helpMessages = {
+    star: {
+        title: "⭐ Notas importantes",
+        body: "Las notas importantes te ayudan a destacar tareas prioritarias.<br><br>• Haz clic en la estrella ★ para marcar/desmarcar como importante<br>• Las notas importantes aparecen con un borde dorado<br>• Puedes filtrarlas fácilmente con el orden 'Importantes primero'<br>• Son perfectas para recordatorios urgentes o tareas críticas"
+    },
+    expand: {
+        title: "▼ Expandir listas",
+        body: "Las listas de tareas pueden contener múltiples elementos.<br><br>• Haz clic en la flecha ▼ para expandir/contraer una lista<br>• Verás todas las tareas de la lista al expandirla<br>• Desde allí puedes marcar tareas individuales como completadas<br>• El estado de la lista se actualiza automáticamente"
+    },
+    checkbox: {
+        title: "✅ Completar tareas",
+        body: "Marca tus progresos fácilmente.<br><br>• Haz clic en el checkbox para marcar una tarea como completada<br>• Las tareas completadas aparecerán tachadas<br>• Cuando todas las tareas de una lista están completas, la lista entera se marca como completada<br>• Puedes ver tu tasa de completado en el panel de estadísticas"
+    },
+    color: {
+        title: "🎨 Colores personalizados",
+        body: "Personaliza la apariencia de tus notas y listas.<br><br>• Al crear o editar, haz clic en el selector de color<br>• Elige entre 8 colores predefinidos<br>• Cada nota/lista tendrá un borde de su color asignado<br>• Ideal para categorizar por tipo, prioridad o proyecto"
+    },
+    dueDate: {
+        title: "📅 Fechas límite",
+        body: "Mantén el control de tus plazos.<br><br>• Solo disponible para Listas de Tareas<br>• Las fechas cambian de color según su estado:<br>  • 🔴 Rojo: Vencidas<br>  • 🟡 Amarillo: Próximas (3 días o menos)<br>  • 🟢 Verde: Futuro<br>• El calendario te muestra todas tus fechas importantes"
+    },
+    filters: {
+        title: "🔍 Filtros inteligentes",
+        body: "Encuentra lo que necesitas rápidamente.<br><br>• Todas: Muestra todos tus elementos<br>• Notas: Solo notas individuales<br>• Listas: Solo listas de tareas<br>• Pendientes: Listas no completadas con fecha futura<br>• Vencidas: Listas con fecha pasada no completadas<br>• Completadas: Elementos ya terminados"
+    },
+    sort: {
+        title: "📊 Ordenar elementos",
+        body: "Organiza tu contenido a tu gusto.<br><br>• Más reciente primero: Por fecha de creación<br>• Más antiguo primero: Orden inverso<br>• A-Z / Z-A: Orden alfabético por título<br>• Próximos a vencer: Por fecha límite (más cercana primero)<br>• Más lejanos: Por fecha límite inversa<br>• Importantes primero: Destaca tus tareas prioritarias"
+    },
+    calendar: {
+        title: "🗓️ Calendario de tareas",
+        body: "Visualiza todas tus fechas importantes.<br><br>• Haz clic en el botón 📅 en la barra de navegación<br>• Verás un calendario con todas tus listas que tienen fecha<br>• Los días con tareas tienen un punto indicador<br>• Haz clic en un día para ver todas las tareas de esa fecha<br>• Desde allí puedes abrir cualquier lista directamente"
+    }
+};
+
+// Función para mostrar la ayuda específica
+function showHelpInfo(helpKey) {
+    const message = helpMessages[helpKey];
+    if (message) {
+        document.getElementById('helpInfoTitle').textContent = message.title;
+        document.getElementById('helpInfoBody').innerHTML = message.body;
+        document.getElementById('helpInfoModal').classList.add('show');
+        document.getElementById('notesContainer').classList.add('blurred');
+    }
+}
+
+// Cerrar modal de ayuda
+function closeHelpInfoModal() {
+    document.getElementById('helpInfoModal').classList.remove('show');
+    document.getElementById('notesContainer').classList.remove('blurred');
+}
+
+// Toggle del menú de ayuda
+function toggleHelpMenu() {
+    const helpMenu = document.getElementById('helpMenu');
+    const fabMenu = document.getElementById('fabMenu');
+    
+    // Cerrar otros menús abiertos
+    if (fabMenu) fabMenu.classList.remove('show');
+    
+    helpMenu.classList.toggle('show');
+}
+
+// Cerrar menú de ayuda
+function closeHelpMenu() {
+    const helpMenu = document.getElementById('helpMenu');
+    if (helpMenu) helpMenu.classList.remove('show');
+}
+
+// Agregar estilos para las animaciones del toast
+const helpStyle = document.createElement('style');
+helpStyle.textContent = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+    @keyframes fadeOutDown {
+        from {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+        }
+    }
+`;
+document.head.appendChild(helpStyle);
+
+// Inicializar eventos del sistema de ayuda
+function initHelpSystem() {
+    const helpFab = document.getElementById('helpFabBtn');
+    const helpMenu = document.getElementById('helpMenu');
+    
+    if (helpFab) {
+        helpFab.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleHelpMenu();
+        });
+    }
+    
+    // Configurar opciones de ayuda
+    const helpOptions = document.querySelectorAll('.help-option');
+    helpOptions.forEach(option => {
+        option.addEventListener('click', (e) => {
+            const helpKey = option.dataset.help;
+            closeHelpMenu();
+            showHelpInfo(helpKey);
+        });
+    });
+    
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.help-fab-container')) {
+            closeHelpMenu();
+        }
+    });
+    
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeHelpInfoModal();
+        }
+    });
+}
+
+// Función para mostrar el toast de bienvenida
+function showWelcomeToast() {
+    const toast = document.createElement('div');
+    toast.className = 'welcome-toast fade-in-up';
+    toast.innerHTML = `
+        🎉 ¡Bienvenido a NODUS! Haz click aqui para comienzar el tour interactivo → 
+        <button class="close-toast" id="closeWelcomeToast">×</button>
+    `;
+    
+    const closeBtn = toast.querySelector('#closeWelcomeToast');
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toast.classList.add('fade-out-down');
+        setTimeout(() => toast.remove(), 300);
+    });
+    
+    toast.addEventListener('click', (e) => {
+        if (e.target !== closeBtn) {
+            toast.classList.add('fade-out-down');
+            setTimeout(() => {
+                toast.remove();
+                startTour();
+            }, 300);
+        }
+    });
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.add('fade-out-down');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 8000);
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar sistema de ayuda
+    initHelpSystem();
+    
+    // Verificar si es la primera visita
+    const tourCompleted = localStorage.getItem('tourCompleted');
+    
+    setTimeout(() => {
+        if (!tourCompleted) {
+            showWelcomeToast();
+        }
+    }, 1500);
+    
+    // Botón de tour en la navbar
+    const tourBtn = document.getElementById('tourBtn');
+    if (tourBtn) {
+        const newTourBtn = tourBtn.cloneNode(true);
+        tourBtn.parentNode.replaceChild(newTourBtn, tourBtn);
+        
+        newTourBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startTour();
+        });
+    }
+    
+    // Guardar referencia a la función original showAddForm
+    const originalShowAddForm = window.showAddForm;
+    window.showAddForm = function(type) {
+        if (originalShowAddForm) {
+            originalShowAddForm(type);
+        }
+    };
+    
+    const originalCloseFormModal = window.closeFormModal;
+    window.closeFormModal = function() {
+        if (originalCloseFormModal) {
+            originalCloseFormModal();
+        }
+    };
+    
+    const originalRenderNotes = window.renderNotes;
+    window.renderNotes = function() {
+        if (originalRenderNotes) originalRenderNotes();
+    };
+});
+
+// ========== FUNCIONES DE EXPORTACIÓN ==========
+
+// Obtener datos actuales para el reporte
+function getReportData() {
+    const totalNotes = notes.length;
+    const individualNotes = notes.filter(n => n.type === 'individual').length;
+    const taskLists = notes.filter(n => n.type === 'grupal').length;
+    const important = notes.filter(n => n.important).length;
+    const completed = notes.filter(n => n.completed).length;
+    const completionRate = totalNotes > 0 ? Math.round((completed / totalNotes) * 100) : 0;
+    
+    let totalTasks = 0;
+    let pendingTasks = 0;
+    let completedTasks = 0;
+    let overdueLists = 0;
+    let completedToday = 0;
+    let addedToday = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    notes.forEach(note => {
+        if (note.type === 'grupal' && note.items) {
+            totalTasks += note.items.length;
+            const completedInList = note.items.filter(item => item.completed).length;
+            completedTasks += completedInList;
+            pendingTasks += note.items.length - completedInList;
+            
+            if (!note.completed && note.dueDate) {
+                const dueDate = getLocalDate(note.dueDate);
+                dueDate.setHours(0, 0, 0, 0);
+                if (dueDate < today) overdueLists++;
+            }
+            
+            if (note.completedDate && isToday(note.completedDate.split('T')[0])) {
+                completedToday += note.items.filter(item => item.completed).length;
+            }
+        } else if (note.type === 'individual' && note.completed && note.completedDate && isToday(note.completedDate.split('T')[0])) {
+            completedToday++;
+        }
+        
+        if (note.date && isToday(note.date.split('T')[0])) addedToday++;
+    });
+    
+    // Obtener listas por estado
+    const pendingLists = notes.filter(n => {
+        if (n.completed) return false;
+        if (n.type === 'individual') return false;
+        if (!n.dueDate) return true;
+        const dueDate = getLocalDate(n.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        return dueDate >= today;
+    }).length;
+    
+    return {
+        totalNotes,
+        individualNotes,
+        taskLists,
+        important,
+        completed,
+        completionRate,
+        totalTasks,
+        completedTasks,
+        pendingTasks,
+        pendingLists,
+        overdueLists,
+        completedToday,
+        addedToday,
+        generatedAt: new Date().toLocaleString('es-ES')
+    };
+}
+
+// Exportar a Excel (XLSX)
+function exportToExcel() {
+    const data = getReportData();
+    
+    // Preparar datos para la hoja de cálculo
+    const summaryData = [
+        ['RESUMEN DE ESTADÍSTICAS - NODUS'],
+        ['Fecha de generación', data.generatedAt],
+        [''],
+        ['MÉTRICAS PRINCIPALES'],
+        ['Total de elementos', data.totalNotes],
+        ['Notas individuales', data.individualNotes],
+        ['Listas de tareas', data.taskLists],
+        ['Elementos importantes', data.important],
+        ['Elementos completados', data.completed],
+        ['Tasa de completado', data.completionRate + '%'],
+        [''],
+        ['MÉTRICAS DE TAREAS'],
+        ['Tareas totales en listas', data.totalTasks],
+        ['Tareas completadas', data.completedTasks],
+        ['Tareas pendientes', data.pendingTasks],
+        [''],
+        ['ESTADO DE LISTAS'],
+        ['Listas pendientes', data.pendingLists],
+        ['Listas vencidas', data.overdueLists],
+        [''],
+        ['ACTIVIDAD RECIENTE'],
+        ['Tareas/notas completadas hoy', data.completedToday],
+        ['Elementos agregados hoy', data.addedToday]
+    ];
+    
+    // Obtener lista detallada de notas
+    const notesDetail = [['TIPO', 'TÍTULO', 'IMPORTANTE', 'COMPLETADO', 'FECHA LÍMITE', 'FECHA CREACIÓN']];
+    notes.forEach(note => {
+        notesDetail.push([
+            note.type === 'individual' ? 'Nota' : 'Lista',
+            note.title,
+            note.important ? 'Sí' : 'No',
+            note.completed ? 'Sí' : 'No',
+            note.dueDate || '-',
+            note.date ? new Date(note.date).toLocaleDateString('es-ES') : '-'
+        ]);
+    });
+    
+    // Crear contenido CSV
+    let csvContent = '';
+    
+    // Agregar resumen
+    summaryData.forEach(row => {
+        csvContent += row.join(',') + '\n';
+    });
+    
+    // Agregar lista detallada
+    csvContent += '\n\n\nDETALLE DE ELEMENTOS\n';
+    notesDetail.forEach(row => {
+        // Escapar comillas en los textos
+        const escapedRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`);
+        csvContent += escapedRow.join(',') + '\n';
+    });
+    
+    // Crear y descargar archivo
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `NODUS_estadisticas_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    // Mostrar notificación
+    showExportNotification('Excel (CSV)');
+}
+
+// Exportar a PDF
+function exportToPDF() {
+    const data = getReportData();
+    
+    // Crear elemento para el contenido del PDF
+    const reportDiv = document.createElement('div');
+    reportDiv.className = 'pdf-report';
+    reportDiv.innerHTML = `
+        <h1>📒 NODUS - Reporte de Estadísticas</h1>
+        <div class="report-date">Generado: ${data.generatedAt}</div>
+        
+        <div class="stats-summary">
+            <div class="stat-box">
+                <div class="stat-value">${data.totalNotes}</div>
+                <div class="stat-label">Total Elementos</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">${data.completionRate}%</div>
+                <div class="stat-label">Tasa de Completado</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">${data.important}</div>
+                <div class="stat-label">Elementos Importantes</div>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr><th colspan="2">📊 Métricas Principales</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Notas individuales</td><td>${data.individualNotes}</td></tr>
+                <tr><td>Listas de tareas</td><td>${data.taskLists}</td></tr>
+                <tr><td>Elementos completados</td><td>${data.completed}</td></tr>
+            </tbody>
+        </table>
+        
+        <table>
+            <thead>
+                <tr><th colspan="2">✅ Métricas de Tareas</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Tareas totales en listas</td><td>${data.totalTasks}</td></tr>
+                <tr><td>Tareas completadas</td><td>${data.completedTasks}</td></tr>
+                <tr><td>Tareas pendientes</td><td>${data.pendingTasks}</td></tr>
+            </tbody>
+        </table>
+        
+        <table>
+            <thead>
+                <tr><th colspan="2">⚠️ Estado de Listas</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Listas pendientes</td><td>${data.pendingLists}</td></tr>
+                <tr><td>Listas vencidas</td><td>${data.overdueLists}</td></tr>
+            </tbody>
+        </table>
+        
+        <table>
+            <thead>
+                <tr><th colspan="2">📅 Actividad Reciente</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Tareas/notas completadas hoy</td><td>${data.completedToday}</td></tr>
+                <tr><td>Elementos agregados hoy</td><td>${data.addedToday}</td></tr>
+            </tbody>
+        </table>
+        
+        <div class="footer">
+            Reporte generado por NODUS - Tu gestor de notas y tareas
+        </div>
+    `;
+    
+    document.body.appendChild(reportDiv);
+    
+    // Opciones para html2pdf
+    const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `NODUS_reporte_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, letterRendering: true, useCORS: true, logging: false },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    // Usar html2pdf si está disponible, si no mostrar mensaje
+    if (typeof html2pdf !== 'undefined') {
+        html2pdf().set(opt).from(reportDiv).save().then(() => {
+            document.body.removeChild(reportDiv);
+            showExportNotification('PDF');
+        }).catch(() => {
+            document.body.removeChild(reportDiv);
+            fallbackPrint(reportDiv);
+        });
+    } else {
+        // Fallback: usar impresión
+        fallbackPrint(reportDiv);
+    }
+}
+
+// Fallback para cuando html2pdf no está disponible
+function fallbackPrint(reportDiv) {
+    const originalTitle = document.title;
+    document.title = 'NODUS_Reporte';
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>NODUS - Reporte de Estadísticas</title>
+            <style>
+                ${document.querySelector('.pdf-report')?.innerHTML ? '' : `
+                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; }
+                    h1 { color: #6200ee; text-align: center; }
+                    .stat-box { background: #f5f5f5; border-radius: 12px; padding: 15px; text-align: center; border-left: 4px solid #6200ee; }
+                    .stat-value { font-size: 28px; font-weight: bold; color: #6200ee; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                    th { background: #6200ee; color: white; }
+                    .footer { text-align: center; margin-top: 30px; font-size: 10px; color: #999; }
+                `}
+            </style>
+        </head>
+        <body>${reportDiv.outerHTML}</body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    printWindow.onafterprint = () => printWindow.close();
+    document.body.removeChild(reportDiv);
+    document.title = originalTitle;
+    showExportNotification('PDF (impresión)');
+}
+
+// Mostrar notificación de exportación
+function showExportNotification(format) {
+    const notification = document.createElement('div');
+    notification.className = 'export-notification';
+    notification.innerHTML = `
+        ✅ Reporte exportado a ${format}
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// Inicializar botones de exportación
+function initExportButtons() {
+    const excelBtn = document.getElementById('exportExcelBtn');
+    const pdfBtn = document.getElementById('exportPdfBtn');
+    
+    if (excelBtn) {
+        excelBtn.addEventListener('click', exportToExcel);
+    }
+    if (pdfBtn) {
+        pdfBtn.addEventListener('click', exportToPDF);
+    }
+}

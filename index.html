@@ -5,8 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>NODUS - Notas y Listas</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Intro.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Changa+One:ital@0;1&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="splashScreen" class="splash-screen">
+        <img src="img/logo.png" alt="NODUS Logo" class="splash-logo splash-logo-light">
+        <img src="img/logo3.png" alt="NODUS Logo" class="splash-logo splash-logo-dark">
+    </div>
     <nav class="navbar">
         <div class="nav-container">
             <h1 class="nav-title">NODUS</h1>
@@ -17,13 +26,15 @@
                 <button class="calendar-toggle-btn" id="calendarToggleBtn" title="Abrir calendario">
                     📅
                 </button>
+                <button class="theme-toggle-btn" id="tourBtn" title="Tour interactivo" style="margin-left: 0.5rem;">
+                    🎓
+                </button>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <!-- Filtros con contadores -->
-        <div class="filter-buttons">
+        <div class="filter-buttons" data-intro="Filtra tus notas y listas por categoría" data-step="1" data-title="📋 Filtros">
             <button class="filter-btn active" data-filter="all">
                 Todas <span class="filter-count" id="countAll">0</span>
             </button>
@@ -44,9 +55,8 @@
             </button>
         </div>
 
-        <!-- Barra de ordenamiento y estadísticas toggle -->
         <div class="controls-bar">
-            <div class="sort-controls">
+            <div class="sort-controls" data-intro="Ordena tus notas por fecha, título o importancia" data-step="2" data-title="🔄 Ordenar">
                 <label class="sort-label">Ordenar por:</label>
                 <select id="sortSelect" class="sort-select">
                     <option value="date_desc">Mas reciente primero</option>
@@ -58,16 +68,27 @@
                     <option value="important">Importantes primero</option>
                 </select>
             </div>
-            <button class="stats-toggle-btn" id="statsToggleBtn">
+            <button class="stats-toggle-btn" id="statsToggleBtn" data-intro="Mira estadísticas detalladas de tu productividad" data-step="3" data-title="📊 Estadísticas">
                 Ver Estadisticas
             </button>
         </div>
-
-        <!-- Panel de estadísticas -->
+        
         <div id="statsPanel" class="stats-panel" style="display: none;">
             <div class="stats-header">
-                <h3>Resumen y Estadisticas</h3>
-                <button class="close-stats" id="closeStatsBtn">×</button>
+                <div class="stats-header-left">
+                    <img src="img/logo.png" alt="Logo NODUS" class="stats-logo stats-logo-light">
+                    <img src="img/logo3.png" alt="Logo NODUS" class="stats-logo stats-logo-dark">
+                    <h3>Resumen y Estadisticas</h3>
+                </div>
+                <div class="stats-actions">
+                    <button class="stats-export-btn" id="exportExcelBtn" title="Exportar a Excel">
+                        📊 Excel
+                    </button>
+                    <button class="stats-export-btn" id="exportPdfBtn" title="Exportar a PDF">
+                        📄 PDF
+                    </button>
+                    <button class="close-stats" id="closeStatsBtn">×</button>
+                </div>
             </div>
             <div class="stats-content">
                 <div class="stats-grid">
@@ -145,14 +166,46 @@
             <div class="calendar-days" id="calendarDays"></div>
         </div>
 
-        <div id="notesContainer" class="notes-container">
+        <div id="notesContainer" class="notes-container" data-intro="Aquí aparecerán tus notas y listas. Haz clic en una nota para verla, o en una lista para expandir sus tareas." data-step="6" data-title="📝 Tus Notas">
         </div>
 
-        <div class="fab-container">
+        <div class="fab-container" data-intro="Botón flotante para crear nuevos elementos" data-step="4" data-title="✨ Crear" data-position="left">
             <button class="fab" id="fab">+</button>
             <div class="fab-menu" id="fabMenu">
                 <button class="fab-menu-option" onclick="showAddForm('individual')">Nota Individual</button>
                 <button class="fab-menu-option" onclick="showAddForm('grupal')">Lista de Tareas</button>
+            </div>
+        </div>
+
+        <div class="help-fab-container">
+            <button class="help-fab" id="helpFabBtn" title="Ayuda rápida">
+                ❓
+            </button>
+            <div class="help-menu" id="helpMenu">
+                <button class="help-option" data-help="star">
+                    ⭐ Notas importantes
+                </button>
+                <button class="help-option" data-help="expand">
+                    ▼ Expandir listas
+                </button>
+                <button class="help-option" data-help="checkbox">
+                    ✅ Completar tareas
+                </button>
+                <button class="help-option" data-help="color">
+                    🎨 Colores personalizados
+                </button>
+                <button class="help-option" data-help="dueDate">
+                    📅 Fechas límite
+                </button>
+                <button class="help-option" data-help="filters">
+                    🔍 Filtros
+                </button>
+                <button class="help-option" data-help="sort">
+                    📊 Ordenar
+                </button>
+                <button class="help-option" data-help="calendar">
+                    🗓️ Calendario
+                </button>
             </div>
         </div>
 
@@ -180,19 +233,19 @@
                         </div>
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" data-intro="Escribe un título descriptivo para tu nota o lista" data-step="7" data-title="📌 Título">
                         <label class="form-label">Titulo</label>
                         <input type="text" id="noteTitle" placeholder="Ingrese el titulo" class="form-input">
                         <div class="error-message" id="titleError"></div>
                     </div>
 
-                    <div class="form-group" id="dateFieldGroup" style="display: none;">
+                    <div class="form-group" id="dateFieldGroup" style="display: none;" data-intro="Opcional: establece una fecha límite para tus listas" data-step="9" data-title="📅 Fecha Límite">
                         <label class="form-label">Fecha (opcional)</label>
                         <input type="date" id="noteDueDate" class="form-input">
                         <div class="error-message" id="dateError"></div>
                     </div>
                     
-                    <div id="individualContent" style="display: none;">
+                    <div id="individualContent" style="display: none;" data-intro="Escribe el contenido de tu nota. Puedes escribir hasta 5000 caracteres." data-step="8" data-title="✏️ Contenido">
                         <div class="form-group">
                             <label class="form-label">Contenido de la nota</label>
                             <textarea id="noteContent" placeholder="Escribe el contenido de tu nota..." class="form-textarea"></textarea>
@@ -249,8 +302,24 @@
                 </div>
             </div>
         </div>
+
+        <div class="help-info-modal" id="helpInfoModal">
+            <div class="help-info-content">
+                <button class="help-close-modal" onclick="closeHelpInfoModal()">×</button>
+                <div class="help-info-header">
+                    <h3 id="helpInfoTitle"></h3>
+                </div>
+                <div class="help-info-body" id="helpInfoBody">
+                </div>
+                <div class="help-info-footer">
+                    <button class="help-info-btn" onclick="closeHelpInfoModal()">Entendido</button>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- Intro.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
